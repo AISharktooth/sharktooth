@@ -1,0 +1,70 @@
+import type { RequestHandler } from "express";
+import type { RequestWithContext } from "../../../../../shared/types/api";
+import { AppError } from "../../../../../shared/utils/errors";
+import { verifyToken } from "../../core/auth/tokens";
+import { auditLog } from "../../core/audit/auditService";
+import { loadEnv } from "../../config/env";
+
+// Auth boundary: derives context solely from verified JWT; dev bypass allowed only in development.
+const env = loadEnv();
+
+export const authContext: RequestHandler = async (req, res, next) => {
+  if (req.path === "/health") return next();
+
+  const ctxReq = req as RequestWithContext;
+  const requestId = ctxReq.context?.requestId;
+  const authHeader = req.header("authorization");
+  const bearerToken =
+    authHeader && authHeader.toLowerCase().startsWith("bearer ")
+      ? authHeader.slice(7).trim()
+      : undefined;
+
+  if (!bearerToken) {
+    if (env.devAuthBypass && process.env.NODE_ENV === "development") {
+      ctxReq.context = {
+        ...(ctxReq.context ?? {}),
+        requestId: requestId ?? "dev-request",
+        userId: env.devUserIdAdmin,
+        tenantId: env.devTenantIdAdmin,
+        role: "ADMIN"
+      };
+      return next();
+    }
+    void auditLog(ctxReq.context ?? ({} as any), {
+      action: "AUTH_DENY",
+      object_type: "auth",
+      metadata: { reason: "missing_token" }
+    });
+    const error = new AppError("Missing auth token", { status: 401, code: "AUTH_REQUIRED" });
+    return res.status(error.status ?? 401).json({ error: error.code, message: error.message });
+  }
+
+  try {
+    const verified = await verifyToken(bearerToken);
+    if (!requestId) {
+      const error = new AppError("Missing request id", { status: 400, code: "REQUEST_ID_MISSING" });
+      return res.status(error.status ?? 400).json({ error: error.code, message: error.message });
+    }
+
+    ctxReq.context = {
+      ...(ctxReq.context ?? {}),
+      requestId,
+      userId: verified.userId,
+      tenantId: verified.tenantId,
+      role: verified.role
+    };
+  } catch (err) {
+    const error =
+      err instanceof AppError
+        ? err
+        : new AppError("Invalid auth token", { status: 401, code: "AUTH_INVALID" });
+    void auditLog(ctxReq.context ?? ({} as any), {
+      action: "AUTH_DENY",
+      object_type: "auth",
+      metadata: { reason: "invalid_token" }
+    });
+    return res.status(error.status ?? 401).json({ error: error.code, message: error.message });
+  }
+
+  next();
+};

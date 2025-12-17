@@ -1,0 +1,1 @@
+-- RO Assistant schema placeholder. Actual schema will implement RLS and pgvector per blueprint.

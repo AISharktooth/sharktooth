@@ -1,0 +1,22 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: dealer_ai_postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: dealer_ai
+      POSTGRES_USER: dealer_ai
+      POSTGRES_PASSWORD: dealer_ai
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dealer_ai"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:

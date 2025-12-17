@@ -1,0 +1,32 @@
+{
+  "name": "stro",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "tsc -b",
+    "start": "node dist/platform/gateway/src/main.js",
+    "dev": "ts-node-dev --respawn --transpile-only platform/gateway/src/main.ts",
+    "lint": "echo \"TODO: add linting\"",
+    "db:migrate": "ts-node scripts/migrate.ts",
+    "test:redaction": "ts-node scripts/tests/redaction_harness.ts",
+    "test:pii-scan": "ts-node scripts/tests/pii_scan_harness.ts",
+    "test:pii-ingest-db": "ts-node scripts/tests/pii_ingest_db_harness.ts"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.11.3"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/express": "^4.17.21",
+    "@types/jsonwebtoken": "^9.0.6",
+    "@types/node": "^20.11.30",
+    "@types/pg": "^8.10.2",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.3.3"
+  }
+}
