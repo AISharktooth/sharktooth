@@ -1,7 +1,7 @@
 BEGIN;
 
 CREATE TABLE IF NOT EXISTS app.audit_logs (
-  audit_id     uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  audit_id     uuid PRIMARY KEY,
   tenant_id    uuid NOT NULL REFERENCES app.tenants(tenant_id) ON DELETE CASCADE,
   user_id      uuid,
   request_id   text,
@@ -20,4 +20,3 @@ USING (tenant_id = app.current_tenant_id())
 WITH CHECK (tenant_id = app.current_tenant_id());
 
 COMMIT;
-

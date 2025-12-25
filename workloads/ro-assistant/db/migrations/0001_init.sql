@@ -2,7 +2,6 @@ BEGIN;
 
 CREATE SCHEMA IF NOT EXISTS app;
 
-CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE EXTENSION IF NOT EXISTS vector;
 CREATE EXTENSION IF NOT EXISTS citext;
 
@@ -31,14 +30,14 @@ $$;
 
 -- Minimal base tables needed for workload + audit
 CREATE TABLE IF NOT EXISTS app.tenants (
-  tenant_id   uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id   uuid PRIMARY KEY,
   name        text NOT NULL,
   is_active   boolean NOT NULL DEFAULT true,
   created_at  timestamptz NOT NULL DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS app.users (
-  user_id     uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id     uuid PRIMARY KEY,
   tenant_id   uuid NOT NULL REFERENCES app.tenants(tenant_id) ON DELETE CASCADE,
   email       citext NOT NULL,
   pass_hash   text NOT NULL,

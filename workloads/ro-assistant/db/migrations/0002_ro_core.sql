@@ -2,7 +2,7 @@ BEGIN;
 
 -- Documents (source file records)
 CREATE TABLE IF NOT EXISTS app.documents (
-  doc_id        uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  doc_id        uuid PRIMARY KEY,
   tenant_id     uuid NOT NULL REFERENCES app.tenants(tenant_id) ON DELETE CASCADE,
   filename      text NOT NULL,
   mime_type     text NOT NULL,
@@ -23,7 +23,7 @@ WITH CHECK (tenant_id = app.current_tenant_id());
 
 -- Repair Orders (derived from attached RO template o.pdf)
 CREATE TABLE IF NOT EXISTS app.repair_orders (
-  ro_id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  ro_id              uuid PRIMARY KEY,
   tenant_id          uuid NOT NULL REFERENCES app.tenants(tenant_id) ON DELETE CASCADE,
   doc_id             uuid NOT NULL REFERENCES app.documents(doc_id) ON DELETE CASCADE,
 

@@ -3,8 +3,10 @@ import { loadEnv } from "../../../../../platform/gateway/src/config/env";
 import { AppError } from "../../../../../shared/utils/errors";
 
 const env = loadEnv();
-const apiVersion = "2023-05-15";
-const endpoint = `${env.azureOpenAiEndpoint}/openai/deployments/${env.azureOpenAiEmbeddingDeployment}/embeddings?api-version=${apiVersion}`;
+const endpoint =
+  env.azureOpenAiEndpoint.includes("/openai/deployments/")
+    ? `${env.azureOpenAiEndpoint}${env.azureOpenAiEndpoint.includes("?") ? "&" : "?"}api-version=${env.azureOpenAiApiVersion}`
+    : `${env.azureOpenAiEndpoint}/openai/deployments/${env.azureOpenAiEmbeddingDeployment}/embeddings?api-version=${env.azureOpenAiApiVersion}`;
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 

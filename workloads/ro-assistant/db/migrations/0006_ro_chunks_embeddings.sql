@@ -1,7 +1,7 @@
 BEGIN;
 
 CREATE TABLE IF NOT EXISTS app.ro_chunks (
-  chunk_id     uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  chunk_id     uuid PRIMARY KEY,
   tenant_id    uuid NOT NULL REFERENCES app.tenants(tenant_id) ON DELETE CASCADE,
   ro_id        uuid NOT NULL REFERENCES app.repair_orders(ro_id) ON DELETE CASCADE,
   chunk_text   text NOT NULL,
@@ -17,7 +17,7 @@ USING (tenant_id = app.current_tenant_id())
 WITH CHECK (tenant_id = app.current_tenant_id());
 
 CREATE TABLE IF NOT EXISTS app.ro_embeddings (
-  embedding_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  embedding_id uuid PRIMARY KEY,
   tenant_id    uuid NOT NULL REFERENCES app.tenants(tenant_id) ON DELETE CASCADE,
   chunk_id     uuid NOT NULL REFERENCES app.ro_chunks(chunk_id) ON DELETE CASCADE,
   embedding    vector(1536) NOT NULL,
@@ -33,4 +33,3 @@ USING (tenant_id = app.current_tenant_id())
 WITH CHECK (tenant_id = app.current_tenant_id());
 
 COMMIT;
-

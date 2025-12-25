@@ -15,6 +15,7 @@ type EnvConfig = {
   azureOpenAiEndpoint: string;
   azureOpenAiApiKey: string;
   azureOpenAiEmbeddingDeployment: string;
+  azureOpenAiApiVersion: string;
   jwtSecret: string;
   jwtExpiresIn: string;
   devAuthBypass: boolean;
@@ -59,6 +60,7 @@ export const loadEnv = (): EnvConfig => {
     process.env.AZURE_OPENAI_EMBEDDING_DEPLOYMENT,
     "AZURE_OPENAI_EMBEDDING_DEPLOYMENT"
   );
+  const azureOpenAiApiVersion = required(process.env.AZURE_OPENAI_API_VERSION, "AZURE_OPENAI_API_VERSION");
   const jwtSecret = required(process.env.JWT_SECRET, "JWT_SECRET");
   const jwtExpiresIn = required(process.env.JWT_EXPIRES_IN, "JWT_EXPIRES_IN");
   const devAuthBypass = (process.env.DEV_AUTH_BYPASS ?? "false").toLowerCase() === "true";
@@ -89,6 +91,7 @@ export const loadEnv = (): EnvConfig => {
     azureOpenAiEndpoint,
     azureOpenAiApiKey,
     azureOpenAiEmbeddingDeployment,
+    azureOpenAiApiVersion,
     jwtSecret,
     jwtExpiresIn,
     devAuthBypass

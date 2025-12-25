@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import type { RequestContext } from "../../../../../shared/types/api";
 import { AppError } from "../../../../../shared/utils/errors";
 import type { DbClient } from "../../../../../platform/gateway/src/db/pg";
@@ -34,10 +35,18 @@ export const storeDocument = async (
 ): Promise<string> => {
   const result = await client.query<{ doc_id: string }>(
     `INSERT INTO app.documents
-       (tenant_id, filename, mime_type, sha256, storage_path, created_by)
-     VALUES ($1, $2, $3, $4, $5, $6)
+       (doc_id, tenant_id, filename, mime_type, sha256, storage_path, created_by)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
      RETURNING doc_id`,
-    [ctx.tenantId, input.filename, input.mimeType, Buffer.from(input.sha256Hash, "hex"), input.storagePath, input.createdBy]
+    [
+      randomUUID(),
+      ctx.tenantId,
+      input.filename,
+      input.mimeType,
+      Buffer.from(input.sha256Hash, "hex"),
+      input.storagePath,
+      input.createdBy
+    ]
   );
   return result.rows[0].doc_id;
 };
@@ -48,10 +57,10 @@ export const storeRepairOrder = async (
   input: { docId: string; roNumber: string }
 ): Promise<string> => {
   const result = await client.query<{ ro_id: string }>(
-    `INSERT INTO app.repair_orders (tenant_id, doc_id, ro_number)
-     VALUES ($1, $2, $3)
+    `INSERT INTO app.repair_orders (ro_id, tenant_id, doc_id, ro_number)
+     VALUES ($1, $2, $3, $4)
      RETURNING ro_id`,
-    [ctx.tenantId, input.docId, input.roNumber]
+    [randomUUID(), ctx.tenantId, input.docId, input.roNumber]
   );
   return result.rows[0].ro_id;
 };
@@ -77,10 +86,10 @@ export const storeChunksAndEmbeddings = async (
     }
 
     const chunkInsert = await client.query<{ chunk_id: string }>(
-      `INSERT INTO app.ro_chunks (tenant_id, ro_id, chunk_text, chunk_index)
-       VALUES ($1, $2, $3, $4)
+      `INSERT INTO app.ro_chunks (chunk_id, tenant_id, ro_id, chunk_text, chunk_index)
+       VALUES ($1, $2, $3, $4, $5)
        RETURNING chunk_id`,
-      [ctx.tenantId, input.roId, chunk.text, chunk.index]
+      [randomUUID(), ctx.tenantId, input.roId, chunk.text, chunk.index]
     );
     const chunkId = chunkInsert.rows[0].chunk_id;
     const embedding = input.embeddings.find((e) => e.chunkId === chunk.id);
@@ -88,9 +97,9 @@ export const storeChunksAndEmbeddings = async (
 
     const vectorLiteral = `[${embedding.embedding.join(",")}]`;
     await client.query(
-      `INSERT INTO app.ro_embeddings (tenant_id, chunk_id, embedding)
-       VALUES ($1, $2, $3::vector)`,
-      [ctx.tenantId, chunkId, vectorLiteral]
+      `INSERT INTO app.ro_embeddings (embedding_id, tenant_id, chunk_id, embedding)
+       VALUES ($1, $2, $3, $4::vector)`,
+      [randomUUID(), ctx.tenantId, chunkId, vectorLiteral]
     );
   }
 };
