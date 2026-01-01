@@ -153,7 +153,9 @@ export const ingestHandler: RequestHandler = async (req, res) => {
       }
     });
 
-    return res.status(status).json({ error: code, message: msg });
+    const includeDetail = process.env.NODE_ENV !== "production";
+    const detail = includeDetail && err instanceof Error ? err.message : undefined;
+    return res.status(status).json({ error: code, message: msg, detail });
   }
 
   return res.status(201).json({ status: "ok" });

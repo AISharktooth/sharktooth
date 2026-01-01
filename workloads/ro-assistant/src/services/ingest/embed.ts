@@ -31,7 +31,12 @@ const embedText = async (text: string): Promise<number[]> => {
       });
       clearTimeout(timeout);
       if (!response.ok) {
-        throw new AppError("Embedding service unavailable", { status: 503, code: "EMBED_FAIL" });
+        const text = await response.text().catch(() => "");
+        const detail = text ? ` - ${text.slice(0, 200)}` : "";
+        throw new AppError(
+          `Embedding service unavailable: ${response.status} ${response.statusText}${detail}`,
+          { status: 503, code: "EMBED_FAIL" }
+        );
       }
       const data = (await response.json()) as any;
       const embedding = data?.data?.[0]?.embedding;
@@ -42,6 +47,9 @@ const embedText = async (text: string): Promise<number[]> => {
     } catch (err) {
       attempt += 1;
       if (attempt >= maxAttempts) {
+        if (err instanceof AppError) {
+          throw err;
+        }
         throw new AppError("Embedding service unavailable", { status: 503, code: "EMBED_FAIL" });
       }
       await sleep(200 * attempt);

@@ -35,5 +35,7 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
   }
 
   // Centralized error response to avoid leaking internals (e.g., DB errors, stack traces).
-  res.status(status).json({ error: code, message, requestId });
+  const includeDetail = process.env.NODE_ENV !== "production";
+  const detail = includeDetail && err instanceof Error ? err.message : undefined;
+  res.status(status).json({ error: code, message, requestId, detail });
 };
