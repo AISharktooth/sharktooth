@@ -8,7 +8,6 @@ import { assertTenantContext } from "../../../../platform/gateway/src/core/tenan
 import { validateFileType } from "../services/ingest/validate";
 import { extractText } from "../services/ingest/extractText";
 import { redactPii } from "../services/ingest/redact";
-import { assertNoPii } from "../services/ingest/piiScan";
 import { chunkText } from "../services/ingest/chunk";
 import { embedChunks } from "../services/ingest/embed";
 import {
@@ -17,6 +16,10 @@ import {
   ensureChunkTables,
   storeChunksAndEmbeddings
 } from "../services/ingest/store";
+import { extractPii } from "../services/pii/piiExtract";
+import { encryptPiiPayload } from "../services/pii/piiEncrypt";
+import { writePiiVaultRecord } from "../services/pii/piiVault";
+import { isTenantPiiEnabled } from "../services/tenant/tenantConfig";
 
 type IngestBody = {
   filename: string;
@@ -42,7 +45,7 @@ export const ingestHandler: RequestHandler = async (req, res) => {
     return res.status(error.status ?? 400).json({ error: error.code, message: error.message });
   }
 
-  if (ctx.role !== "ADMIN") {
+  if (ctx.role !== "ADMIN" && ctx.role !== "DEALERADMIN" && ctx.role !== "DEVELOPER") {
     const error = new AppError("Admin role required", { status: 403, code: "ADMIN_ONLY" });
     return res.status(error.status ?? 403).json({ error: error.code, message: error.message });
   }
@@ -111,7 +114,32 @@ export const ingestHandler: RequestHandler = async (req, res) => {
       });
 
       const rawText = extractText(fileBuffer);
-      assertNoPii(rawText);
+      const piiPayload = extractPii(rawText);
+      if (piiPayload) {
+        const piiEnabled = await isTenantPiiEnabled(client, safeCtx);
+        if (piiEnabled) {
+          const encrypted = await encryptPiiPayload(piiPayload);
+          await writePiiVaultRecord(client, safeCtx, {
+            roId,
+            keyRef: encrypted.keyRef,
+            nonce: encrypted.nonce,
+            ciphertext: encrypted.ciphertext
+          });
+          await auditLog(safeCtx, {
+            action: "PII_WRITE",
+            object_type: "pii_vault",
+            object_id: roId,
+            metadata: { fields: Object.keys(piiPayload) }
+          });
+        } else {
+          await auditLog(safeCtx, {
+            action: "PII_WRITE_DENIED",
+            object_type: "pii_vault",
+            object_id: roId,
+            metadata: { reason: "pii_not_enabled" }
+          });
+        }
+      }
       const redactedText = redactPii(rawText);
       const chunks = chunkText(redactedText);
       const embeddings = await embedChunks(chunks);

@@ -45,9 +45,10 @@ export const auditLog = async (ctx: RequestContext, event: AuditEvent) => {
     await withRequestContext(safeCtx, async (client) => {
       await client.query(
         `INSERT INTO app.audit_logs
-          (tenant_id, user_id, request_id, action, object_type, object_id, metadata)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+          (audit_id, tenant_id, user_id, request_id, action, object_type, object_id, metadata)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
         [
+          randomUUID(),
           safeCtx.tenantId,
           safeCtx.userId,
           safeCtx.requestId,

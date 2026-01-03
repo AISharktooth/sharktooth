@@ -19,17 +19,23 @@ import { auditRouter } from "./routes/audit";
 import { secretsRouter } from "./routes/secrets";
 import { policyRouter } from "./routes/policy";
 import { workloadsRouter } from "./routes/workloads";
+import { adminUiRouter } from "./routes/adminUi";
+import { adminApiRouter } from "./routes/adminApi";
+import { adminUsersRouter } from "./routes/adminUsers";
+import { adminUiPublicRouter } from "./routes/adminUiPublic";
 
 export const createServer = () => {
   const app = express();
 
   const maxUploadBytes = Number(process.env.MAX_UPLOAD_BYTES ?? 5 * 1024 * 1024);
   app.use(express.json({ limit: maxUploadBytes * 2 }));
+  app.use(express.urlencoded({ extended: false }));
   app.use(requestId);
 
   // Public Routes
   app.use(healthRouter);
   app.use(authRouter);
+  app.use(adminUiPublicRouter);
 
   // Auth boundary starts here
   app.use(authContext);
@@ -42,6 +48,9 @@ export const createServer = () => {
   // Protected Routes
   app.use(authMeRouter);
   app.use(auditRouter);
+  app.use(adminApiRouter);
+  app.use(adminUsersRouter);
+  app.use(adminUiRouter);
   app.use(secretsRouter);
   app.use(policyRouter);
   app.use(workloadsRouter);

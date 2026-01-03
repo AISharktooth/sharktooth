@@ -71,20 +71,6 @@ export const storeChunksAndEmbeddings = async (
   input: { roId: string; chunks: Chunk[]; embeddings: EmbeddedChunk[] }
 ) => {
   for (const chunk of input.chunks) {
-    // Guard: ensure no PII-pattern content is stored in chunk_text.
-    const piiPatterns = [
-      /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i, // email
-      /(\+?\d[\d\s().-]{8,}\d)/, // phone heuristic
-      /\b[0-9A-HJ-NPR-Z]{17}\b/i // VIN
-    ];
-    const hasPii = piiPatterns.some((re) => re.test(chunk.text));
-    if (hasPii) {
-      throw new AppError("Redaction failed: PII detected in chunk", {
-        status: 400,
-        code: "PII_NOT_REDACTED"
-      });
-    }
-
     const chunkInsert = await client.query<{ chunk_id: string }>(
       `INSERT INTO app.ro_chunks (chunk_id, tenant_id, ro_id, chunk_text, chunk_index)
        VALUES ($1, $2, $3, $4, $5)

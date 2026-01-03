@@ -21,13 +21,24 @@ export const evaluatePolicy = async (
     return { allow: false, reason: "cross_tenant_denied" };
   }
 
-  if (action === "PII_READ" || action === "PII_WRITE") {
-    if (ctx.role !== "ADMIN" && ctx.role !== "PII_APPROVED") {
+  if (action === "PII_READ") {
+    if (ctx.role !== "ADMIN" && ctx.role !== "DEALERADMIN" && ctx.role !== "DEVELOPER") {
       return { allow: false, reason: "pii_role_denied" };
     }
   }
 
-  if (action === "BULK_DOWNLOAD" && ctx.role !== "ADMIN") {
+  if (action === "PII_WRITE") {
+    if (ctx.role !== "ADMIN" && ctx.role !== "DEALERADMIN" && ctx.role !== "DEVELOPER") {
+      return { allow: false, reason: "pii_role_denied" };
+    }
+  }
+
+  if (
+    action === "BULK_DOWNLOAD" &&
+    ctx.role !== "ADMIN" &&
+    ctx.role !== "DEALERADMIN" &&
+    ctx.role !== "DEVELOPER"
+  ) {
     return { allow: false, reason: "bulk_admin_only" };
   }
 

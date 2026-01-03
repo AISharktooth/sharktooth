@@ -1,10 +1,14 @@
 import fs from "fs";
 import path from "path";
 import { Client } from "pg";
+import dotenv from "dotenv";
 
-const DATABASE_URL =
-  process.env.DATABASE_URL ||
-  "postgres://dealer_ai:dealer_ai@localhost:5432/dealer_ai";
+dotenv.config();
+
+const DATABASE_URL = process.env.DATABASE_URL;
+if (!DATABASE_URL) {
+  throw new Error("DATABASE_URL not configured");
+}
 
 async function runMigrations() {
   const client = new Client({ connectionString: DATABASE_URL });

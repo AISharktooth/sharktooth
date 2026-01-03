@@ -22,9 +22,6 @@ type EnvConfig = {
   devAuthTokenAdmin: string;
   devUserIdAdmin: string;
   devTenantIdAdmin: string;
-  devAuthTokenTech: string;
-  devUserIdTech: string;
-  devTenantIdTech: string;
 };
 
 // Proprietary environment validation to safeguard operational parameters; reverse engineering or reuse is prohibited.
@@ -68,11 +65,8 @@ export const loadEnv = (): EnvConfig => {
   const devAuthTokenAdmin = required(process.env.DEV_AUTH_TOKEN_ADMIN, "DEV_AUTH_TOKEN_ADMIN");
   const devUserIdAdmin = required(process.env.DEV_USER_ID_ADMIN, "DEV_USER_ID_ADMIN");
   const devTenantIdAdmin = required(process.env.DEV_TENANT_ID_ADMIN, "DEV_TENANT_ID_ADMIN");
-  const devAuthTokenTech = required(process.env.DEV_AUTH_TOKEN_TECH, "DEV_AUTH_TOKEN_TECH");
-  const devUserIdTech = required(process.env.DEV_USER_ID_TECH, "DEV_USER_ID_TECH");
-  const devTenantIdTech = required(process.env.DEV_TENANT_ID_TECH, "DEV_TENANT_ID_TECH");
 
-  if (![devUserIdAdmin, devTenantIdAdmin, devUserIdTech, devTenantIdTech].every(isUuid)) {
+  if (![devUserIdAdmin, devTenantIdAdmin].every(isUuid)) {
     throw new AppError("DEV IDs must be UUIDs", { status: 500, code: "ENV_INVALID_UUID" });
   }
 
@@ -84,9 +78,6 @@ export const loadEnv = (): EnvConfig => {
     devAuthTokenAdmin,
     devUserIdAdmin,
     devTenantIdAdmin,
-    devAuthTokenTech,
-    devUserIdTech,
-    devTenantIdTech,
     maxUploadBytes,
     azureOpenAiEndpoint,
     azureOpenAiApiKey,

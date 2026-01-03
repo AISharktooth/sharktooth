@@ -15,24 +15,24 @@ CREATE TABLE IF NOT EXISTS app.pii_vault (
 
 ALTER TABLE app.pii_vault ENABLE ROW LEVEL SECURITY;
 
--- Read: ADMIN or PII_APPROVED
+-- Read: ADMIN or DEVELOPER
 DROP POLICY IF EXISTS pii_vault_read_policy ON app.pii_vault;
 CREATE POLICY pii_vault_read_policy
 ON app.pii_vault
 FOR SELECT
 USING (
   tenant_id = app.current_tenant_id()
-  AND app.current_role() IN ('ADMIN','PII_APPROVED')
+  AND app.current_role() IN ('ADMIN','DEVELOPER')
 );
 
--- Write: ADMIN only
+-- Write: ADMIN or DEVELOPER
 DROP POLICY IF EXISTS pii_vault_insert_policy ON app.pii_vault;
 CREATE POLICY pii_vault_insert_policy
 ON app.pii_vault
 FOR INSERT
 WITH CHECK (
   tenant_id = app.current_tenant_id()
-  AND app.current_role() = 'ADMIN'
+  AND app.current_role() IN ('ADMIN','DEVELOPER')
 );
 
 DROP POLICY IF EXISTS pii_vault_update_policy ON app.pii_vault;
@@ -41,11 +41,11 @@ ON app.pii_vault
 FOR UPDATE
 USING (
   tenant_id = app.current_tenant_id()
-  AND app.current_role() = 'ADMIN'
+  AND app.current_role() IN ('ADMIN','DEVELOPER')
 )
 WITH CHECK (
   tenant_id = app.current_tenant_id()
-  AND app.current_role() = 'ADMIN'
+  AND app.current_role() IN ('ADMIN','DEVELOPER')
 );
 
 DROP POLICY IF EXISTS pii_vault_delete_policy ON app.pii_vault;
@@ -54,7 +54,7 @@ ON app.pii_vault
 FOR DELETE
 USING (
   tenant_id = app.current_tenant_id()
-  AND app.current_role() = 'ADMIN'
+  AND app.current_role() IN ('ADMIN','DEVELOPER')
 );
 
 COMMIT;

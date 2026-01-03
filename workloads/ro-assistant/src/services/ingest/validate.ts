@@ -1,6 +1,6 @@
 import { AppError } from "../../../../../shared/utils/errors";
 
-const allowedExtensions = [".pdf", ".txt"];
+const allowedExtensions = [".xml"];
 
 const getExtension = (filename: string) => {
   const idx = filename.lastIndexOf(".");

@@ -45,6 +45,13 @@ authRouter.post("/auth/login", async (req, res, next) => {
       tenantId: user.tenant_id,
       role: user.role as any
     });
+    const isSecure = process.env.NODE_ENV === "production";
+    res.cookie("auth_token", token, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: isSecure,
+      path: "/"
+    });
     await auditLog(req as any, { action: "LOGIN_SUCCESS", object_type: "auth", metadata: { user_id: user.user_id } });
     return res.status(200).json({ token });
   } catch (err) {
@@ -52,6 +59,12 @@ authRouter.post("/auth/login", async (req, res, next) => {
   } finally {
     client.release();
   }
+});
+
+authRouter.post("/auth/logout", async (_req, res) => {
+  const isSecure = process.env.NODE_ENV === "production";
+  res.clearCookie("auth_token", { path: "/", httpOnly: true, sameSite: "lax", secure: isSecure });
+  return res.status(204).send();
 });
 
 // /auth/me is mounted in the protected router.

@@ -1,26 +1,27 @@
-import { assertNoPii } from "../../workloads/ro-assistant/src/services/ingest/piiScan";
+import { extractPii } from "../../workloads/ro-assistant/src/services/pii/piiExtract";
 
-const badSamples = [
-  "Contact me at john.doe@example.com",
-  "Phone: 555-123-4567",
-  "VIN 1HGCM82633A123456",
-  "123 Main St, Springfield"
-];
+const sample = `<repair_order>
+  <customer_name>Jane Roe</customer_name>
+  <email>jane.roe@example.com</email>
+  <phone>555-123-4567</phone>
+  <vin>1HGCM82633A123456</vin>
+  <license_plate>ABC1234</license_plate>
+  <payment_method>Visa</payment_method>
+  <address>123 Main St</address>
+  <address_city>Springfield</address_city>
+  <address_state>IL</address_state>
+  <address_zip>62704</address_zip>
+</repair_order>`;
 
-let failedCount = 0;
-for (const sample of badSamples) {
-  try {
-    assertNoPii(sample);
-    console.error("PII was not detected for sample:", sample);
-    failedCount++;
-  } catch {
-    // expected
-  }
-}
-
-if (failedCount > 0) {
-  console.error("PII scan harness FAILED");
+const payload = extractPii(sample);
+if (!payload) {
+  console.error("PII was not detected for XML sample");
   process.exit(1);
 }
 
-console.log("PII scan harness passed: all PII samples rejected.");
+if (!payload.customerName || !payload.emails?.length || !payload.phones?.length || !payload.vins?.length) {
+  console.error("PII payload missing expected fields", payload);
+  process.exit(1);
+}
+
+console.log("PII scan harness passed: XML fields detected.");

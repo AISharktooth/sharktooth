@@ -32,7 +32,8 @@ No shortcuts
 No mocks, test-only ingestion paths, database inserts, or bypasses are allowed.
 
 Compliance-first
-No PII, real VINs, customer identifiers, phone numbers, emails, or addresses may appear anywhere in the dataset.
+Synthetic PII is required for demos (names, emails, phones, addresses, license plates, payment method), but must never be real.
+Use only synthetic values (e.g., `@example.test`, 555-###-####, clearly fake VINs).
 
 Demo gravity
 The dataset must enable demos that feel inevitable, not experimental.
@@ -66,7 +67,7 @@ Open date / close date
 
 Mileage (numeric, plausible)
 
-VIN field (placeholder only, clearly marked as synthetic)
+VIN field (synthetic, clearly fake)
 
 Vehicle Information
 
@@ -75,6 +76,20 @@ Year (placeholder)
 Make (placeholder)
 
 Model (placeholder)
+
+Customer Information (synthetic PII; required)
+
+Customer name
+
+Email
+
+Phone number
+
+Address (line + city/state/zip)
+
+License plate
+
+Payment method
 
 Customer Concern
 
@@ -260,13 +275,7 @@ One-to-one correspondence between XML files and .txt files
 
 All RO numbers are unique
 
-No forbidden patterns exist:
-
-VIN-like strings
-
-Emails
-
-Phone numbers
+Synthetic PII fields are present and use synthetic-only formats
 
 Files are non-empty
 
@@ -287,6 +296,8 @@ Demo queries consistently retrieve meaningful historical context
 A service manager can immediately see operational value
 
 The dataset can be reused for future demos without modification
+
+The dataset contains synthetic PII suitable for demo features and no real PII
 
 11. Final Instruction to Codex
 

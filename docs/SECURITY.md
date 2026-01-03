@@ -10,9 +10,14 @@ Tenant isolation strategy:
 - app.* session vars set per request; all SQL uses tenant_id filters; RLS enabled on all tenant tables.
 
 PII handling guarantees:
-- Ingestion blocks if PII patterns (email/phone/VIN/address) are detected before any storage/embedding.
-- Redaction runs before chunking; chunks/embeddings written only after PII gate passes.
-- No PII in logs, prompts, or embeddings; PII vault exists but PII endpoints are not implemented in this pilot.
+- Ingestion allows PII and stores it only in `app.pii_vault` (ciphertext only, AEAD, per-workload key ref).
+- Active key rotation is supported via a key ring with a distinct `key_ref` per ciphertext.
+- Redaction runs before chunking; chunks/embeddings are written only from redacted content.
+- No PII in logs, prompts, embeddings, or vector queries; access to the vault is role-gated and audited.
+- PII storage and access are disabled by default and must be enabled per tenant.
+- PII access requires a reason code and logs `PII_READ`/`PII_WRITE` without raw content.
+- PII keys are loaded from environment or Azure Key Vault (`SECRETS_PROVIDER=azure_key_vault`).
+- Re-encryption on key rotation is supported via `scripts/pii_reencrypt.ts`.
 
 Audit logging:
 - Auth/RBAC/policy/rate-limit denials are audited.

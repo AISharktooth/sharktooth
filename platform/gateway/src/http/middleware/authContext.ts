@@ -18,8 +18,19 @@ export const authContext: RequestHandler = async (req, res, next) => {
     authHeader && authHeader.toLowerCase().startsWith("bearer ")
       ? authHeader.slice(7).trim()
       : undefined;
+  const cookieToken = req.headers.cookie
+    ? req.headers.cookie
+        .split(";")
+        .map((part) => part.trim())
+        .find((part) => part.startsWith("auth_token="))
+        ?.split("=")[1]
+    : undefined;
+  const token = bearerToken ?? cookieToken;
 
-  if (!bearerToken) {
+  if (!token) {
+    if (req.method === "GET" && req.path.startsWith("/admin")) {
+      return res.redirect(302, "/admin/login");
+    }
     if (env.devAuthBypass && process.env.NODE_ENV === "development") {
       ctxReq.context = {
         ...(ctxReq.context ?? {}),
@@ -40,7 +51,7 @@ export const authContext: RequestHandler = async (req, res, next) => {
   }
 
   try {
-    const verified = await verifyToken(bearerToken);
+    const verified = await verifyToken(token);
     if (!requestId) {
       const error = new AppError("Missing request id", { status: 400, code: "REQUEST_ID_MISSING" });
       return res.status(error.status ?? 400).json({ error: error.code, message: error.message });
@@ -58,6 +69,9 @@ export const authContext: RequestHandler = async (req, res, next) => {
       err instanceof AppError
         ? err
         : new AppError("Invalid auth token", { status: 401, code: "AUTH_INVALID" });
+    if (req.method === "GET" && req.path.startsWith("/admin")) {
+      return res.redirect(302, "/admin/login");
+    }
     void auditLog(ctxReq.context ?? ({} as any), {
       action: "AUTH_DENY",
       object_type: "auth",

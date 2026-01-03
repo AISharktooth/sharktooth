@@ -22,8 +22,25 @@ auditRouter.get("/audit", async (req, res) => {
 
   try {
     const data = await withRequestContext(ctx, async (client) => {
-      const params: any[] = [ctx.tenantId];
-      const where: string[] = ["tenant_id = $1"];
+      const scopeResult = await client.query<{ group_id: string | null }>(
+        `SELECT group_id FROM app.tenants WHERE tenant_id = $1`,
+        [ctx.tenantId]
+      );
+      const groupId = scopeResult.rows[0]?.group_id ?? null;
+      const isDeveloper = ctx.role === "DEVELOPER";
+      const isDealerAdmin = ctx.role === "DEALERADMIN";
+      const params: any[] = [];
+      const where: string[] = [];
+
+      if (!isDeveloper) {
+        if (isDealerAdmin && groupId) {
+          params.push(groupId);
+          where.push(`tenant_id IN (SELECT tenant_id FROM app.tenants WHERE group_id = $1)`);
+        } else {
+          params.push(ctx.tenantId);
+          where.push(`tenant_id = $1`);
+        }
+      }
 
       if (action) {
         params.push(action);
@@ -52,7 +69,7 @@ auditRouter.get("/audit", async (req, res) => {
       const sql = `
         SELECT audit_id, action, object_type, object_id, metadata, created_at, request_id, user_id
         FROM app.audit_logs
-        WHERE ${where.join(" AND ")}
+        ${where.length ? `WHERE ${where.join(" AND ")}` : ""}
         ORDER BY created_at DESC, audit_id DESC
         LIMIT $${params.length}
       `;

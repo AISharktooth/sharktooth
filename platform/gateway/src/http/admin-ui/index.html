@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RO Admin Console</title>
+    <link rel="stylesheet" href="/admin/styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="page">
+      <aside class="nav">
+        <div class="brand">
+          <span class="dot"></span>
+          <div>
+            <h1>RO Admin</h1>
+            <p>Gateway Console</p>
+          </div>
+        </div>
+        <nav>
+          <button data-section="dashboard" class="active">Dashboard</button>
+          <button data-section="tenants">Tenant</button>
+          <button data-section="groups">Groups</button>
+          <button data-section="users">Users</button>
+          <button data-section="ingest">Ingest</button>
+          <button data-section="audit">Audit</button>
+        </nav>
+      </aside>
+      <main class="content">
+        <header class="topbar">
+          <div>
+            <h2 id="sectionTitle">Dashboard</h2>
+            <p id="sectionSubtitle">System overview and recent activity.</p>
+          </div>
+          <div class="top-actions">
+            <button id="logoutBtn" class="ghost">Logout</button>
+          </div>
+        </header>
+
+        <section id="dashboard" class="section active">
+          <div class="grid">
+            <div class="card dashboard-card" data-target="tenants">
+              <h3>Tenant Status</h3>
+              <p id="tenantSummary">Loading…</p>
+            </div>
+            <div class="card dashboard-card" data-target="users">
+              <h3>Users</h3>
+              <p id="userSummary">Loading…</p>
+            </div>
+            <div class="card dashboard-card" data-target="ingest">
+              <h3>Ingest Activity</h3>
+              <p id="ingestSummary">Loading…</p>
+            </div>
+            <div class="card dashboard-card" data-target="audit">
+              <h3>Audit Activity</h3>
+              <p id="auditSummary">Loading…</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="tenants" class="section">
+          <div class="card">
+            <h3>Tenant Settings</h3>
+            <div class="field inline" id="createTenantRow">
+              <input id="tenantName" placeholder="New tenant name" />
+              <input id="tenantGroup" placeholder="Group ID (optional)" />
+              <button id="createTenant">Create Tenant</button>
+            </div>
+            <p id="tenantCreateStatus"></p>
+            <table>
+              <thead>
+                <tr>
+                  <th>Tenant ID</th>
+                  <th>Name</th>
+                  <th>Active</th>
+                  <th>PII Enabled</th>
+                  <th>Group (ID or name)</th>
+                  <th>Save</th>
+                </tr>
+              </thead>
+              <tbody id="tenantTable"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="groups" class="section">
+          <div class="card">
+            <h3>Dealer Groups</h3>
+            <div class="field inline" id="createGroupRow">
+              <input id="groupName" placeholder="New group name" />
+              <button id="createGroup">Create Group</button>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Group ID</th>
+                  <th>Name</th>
+                  <th>Created</th>
+                </tr>
+              </thead>
+              <tbody id="groupTable"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="users" class="section">
+          <div class="card">
+            <h3>User Management</h3>
+            <div class="field inline">
+              <input id="userEmail" placeholder="user@example.com" />
+              <input id="userPassword" type="password" placeholder="Temp password" />
+              <select id="userRole">
+                <option value="USER">USER</option>
+                <option value="ADMIN">ADMIN</option>
+                <option value="DEALERADMIN">DEALERADMIN</option>
+                <option value="DEVELOPER">DEVELOPER</option>
+              </select>
+              <input id="userTenant" placeholder="Tenant ID or name" />
+              <button id="createUser">Create</button>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>User ID</th>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th>Active</th>
+                  <th>Save</th>
+                  <th>Delete</th>
+                </tr>
+              </thead>
+              <tbody id="userTable"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="ingest" class="section">
+          <div class="card">
+            <h3>Ingest Repair Orders</h3>
+            <p>Upload XML files. Requests run sequentially to avoid rate limits.</p>
+            <input id="ingestFiles" type="file" accept=".xml" multiple />
+            <div class="field inline">
+              <label for="ingestDelay">Delay (ms)</label>
+              <input id="ingestDelay" type="number" min="0" value="750" />
+              <button id="ingestBtn">Start Ingest</button>
+            </div>
+            <div id="ingestLog" class="log"></div>
+          </div>
+        </section>
+
+        <section id="audit" class="section">
+          <div class="card">
+            <h3>Audit Logs</h3>
+            <div class="field inline">
+              <input id="auditAction" placeholder="Action filter (optional)" />
+              <button id="auditRefresh">Refresh</button>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>Action</th>
+                  <th>Object</th>
+                  <th>User</th>
+                </tr>
+              </thead>
+              <tbody id="auditTable"></tbody>
+            </table>
+          </div>
+        </section>
+
+      </main>
+    </div>
+    <script src="/admin/app.js"></script>
+  </body>
+</html>

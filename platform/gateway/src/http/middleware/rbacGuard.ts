@@ -10,12 +10,14 @@ type PermissionRule = {
 };
 
 const rules: PermissionRule[] = [
-  { match: (m, p) => m === "GET" && p === "/audit", roles: ["ADMIN"] },
-  { match: (m, p) => m === "POST" && p === "/workloads/ro/ingest", roles: ["ADMIN"] },
-  { match: (m, p) => m === "POST" && p === "/workloads/ro/search", roles: ["TECH", "ADMIN", "PII_APPROVED"] },
-  { match: (m, p) => m === "POST" && p === "/workloads/ro/answer", roles: ["TECH", "ADMIN", "PII_APPROVED"] },
-  { match: (m, p) => m === "GET" && p.startsWith("/workloads/ro/ro/"), roles: ["TECH", "ADMIN", "PII_APPROVED"] },
-  { match: (_m, _p) => true, roles: ["TECH", "ADMIN", "PII_APPROVED"] } // default guard for other protected routes
+  { match: (m, p) => m === "GET" && p.startsWith("/admin"), roles: ["ADMIN", "DEALERADMIN", "DEVELOPER"] },
+  { match: (m, p) => m === "GET" && p === "/audit", roles: ["ADMIN", "DEALERADMIN", "DEVELOPER"] },
+  { match: (_m, p) => p.startsWith("/admin/api"), roles: ["ADMIN", "DEALERADMIN", "DEVELOPER"] },
+  { match: (m, p) => m === "POST" && p === "/workloads/ro/ingest", roles: ["ADMIN", "DEALERADMIN", "DEVELOPER"] },
+  { match: (m, p) => m === "POST" && p === "/workloads/ro/search", roles: ["USER", "ADMIN", "DEALERADMIN", "DEVELOPER"] },
+  { match: (m, p) => m === "POST" && p === "/workloads/ro/answer", roles: ["USER", "ADMIN", "DEALERADMIN", "DEVELOPER"] },
+  { match: (m, p) => m === "GET" && p.startsWith("/workloads/ro/ro/"), roles: ["USER", "ADMIN", "DEALERADMIN", "DEVELOPER"] },
+  { match: (_m, _p) => true, roles: ["USER", "ADMIN", "DEALERADMIN", "DEVELOPER"] } // default guard for other protected routes
 ];
 
 const isAllowed = (method: string, path: string, role: Role) => {
@@ -40,6 +42,9 @@ export const rbacGuard: RequestHandler = (req, res, next) => {
 
   const allowed = isAllowed(req.method, req.path, ctx.role);
   if (!allowed) {
+    if (req.method === "GET" && req.path.startsWith("/admin")) {
+      return res.redirect(302, "/admin/login");
+    }
     void auditLog(ctx, {
       action: "RBAC_DENY",
       object_type: "rbac",

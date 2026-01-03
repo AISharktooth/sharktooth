@@ -5,7 +5,7 @@ CREATE SCHEMA IF NOT EXISTS app;
 CREATE EXTENSION IF NOT EXISTS vector;
 
 DO $$ BEGIN
-  CREATE TYPE app.user_role AS ENUM ('TECH', 'ADMIN', 'PII_APPROVED');
+  CREATE TYPE app.user_role AS ENUM ('USER', 'ADMIN', 'DEALERADMIN', 'DEVELOPER');
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS app.users (
   tenant_id   uuid NOT NULL REFERENCES app.tenants(tenant_id) ON DELETE CASCADE,
   email       text NOT NULL,
   pass_hash   text NOT NULL,
-  role        app.user_role NOT NULL DEFAULT 'TECH',
+  role        app.user_role NOT NULL DEFAULT 'USER',
   is_active   boolean NOT NULL DEFAULT true,
   created_at  timestamptz NOT NULL DEFAULT now(),
   UNIQUE (tenant_id, email)

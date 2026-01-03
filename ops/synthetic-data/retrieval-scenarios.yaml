@@ -1,0 +1,190 @@
+- scenario_id: tech_hot_restart_click
+  user_query: "Hot restart no crank, single click on <MAKE> <MODEL>. Any past fix?"
+  intent_description: Find prior RO where hot no-start single-click was diagnosed and resolved.
+  expected_primary_match: RO-0001
+  acceptable_secondary_matches:
+    - RO-0002
+    - RO-0003
+  explicit_non_matches:
+    - RO-0040
+    - RO-0055
+- scenario_id: tech_brake_fade_soft_pedal
+  user_query: "Brake pedal goes soft after a few stops on <MAKE> <MODEL>."
+  intent_description: Locate prior brake fade repairs including bleed or master cylinder replacement.
+  expected_primary_match: RO-0010
+  acceptable_secondary_matches:
+    - RO-0011
+    - RO-0012
+  explicit_non_matches:
+    - RO-0065
+    - RO-0078
+- scenario_id: tech_heater_weak_idle
+  user_query: "Heater weak at idle but better with rpm on <MAKE> <MODEL>."
+  intent_description: Find cooling system repairs that restored heat at idle.
+  expected_primary_match: RO-0018
+  acceptable_secondary_matches:
+    - RO-0019
+    - RO-0020
+  explicit_non_matches:
+    - RO-0082
+    - RO-0093
+- scenario_id: tech_ac_warm_idle
+  user_query: "A/C warm at idle, cools when driving on <MAKE> <MODEL>."
+  intent_description: Retrieve idle A/C performance repairs involving fan control or airflow.
+  expected_primary_match: RO-0025
+  acceptable_secondary_matches:
+    - RO-0026
+    - RO-0027
+  explicit_non_matches:
+    - RO-0039
+    - RO-0060
+- scenario_id: tech_blower_no_airflow
+  user_query: "Blower runs but little/no airflow from vents on <MAKE> <MODEL>."
+  intent_description: Find HVAC repairs for mode/blend door failures causing blocked airflow.
+  expected_primary_match: RO-0031
+  acceptable_secondary_matches:
+    - RO-0032
+    - RO-0033
+  explicit_non_matches:
+    - RO-0021
+    - RO-0047
+- scenario_id: tech_coolant_smell_fogging
+  user_query: "Sweet coolant smell in cabin and windows fog on <MAKE> <MODEL>."
+  intent_description: Locate heater core leak repairs tied to cabin odor and fogging.
+  expected_primary_match: RO-0038
+  acceptable_secondary_matches:
+    - RO-0039
+    - RO-0040
+  explicit_non_matches:
+    - RO-0017
+    - RO-0024
+- scenario_id: tech_transmission_shudder
+  user_query: "Light throttle shudder at steady cruise on <MAKE> <MODEL>."
+  intent_description: Find transmission shudder repairs involving fluid service or adaptation.
+  expected_primary_match: RO-0043
+  acceptable_secondary_matches:
+    - RO-0044
+    - RO-0045
+  explicit_non_matches:
+    - RO-0014
+    - RO-0029
+- scenario_id: tech_cv_click_turns
+  user_query: "Clicking from front axle on tight turns for <MAKE> <MODEL>."
+  intent_description: Retrieve CV axle replacement repairs for clicking on turns.
+  expected_primary_match: RO-0049
+  acceptable_secondary_matches:
+    - RO-0050
+    - RO-0051
+  explicit_non_matches:
+    - RO-0066
+    - RO-0072
+- scenario_id: tech_brake_vibration_highway
+  user_query: "Steering wheel shakes during braking from highway speed on <MAKE> <MODEL>."
+  intent_description: Find rotor runout or brake vibration repairs.
+  expected_primary_match: RO-0056
+  acceptable_secondary_matches:
+    - RO-0057
+    - RO-0058
+  explicit_non_matches:
+    - RO-0015
+    - RO-0030
+- scenario_id: tech_repeat_misdiagnosis
+  user_query: "Comeback for no-start, prior repair didn't fix. Need how it was finally solved."
+  intent_description: Identify repeat-visit RO where initial diagnosis failed and later fix resolved no-start.
+  expected_primary_match: RO-0062
+  acceptable_secondary_matches:
+    - RO-0063
+    - RO-0064
+  explicit_non_matches:
+    - RO-0004
+    - RO-0079
+- scenario_id: advisor_phone_quote_brakes
+  user_query: "Can I quote a brake pedal fade repair for <MAKE> <MODEL> based on history?"
+  intent_description: Provide historical brake fade repairs to estimate labor and parts for quoting.
+  expected_primary_match: RO-0012
+  acceptable_secondary_matches:
+    - RO-0010
+    - RO-0011
+  explicit_non_matches:
+    - RO-0080
+    - RO-0090
+- scenario_id: advisor_parts_accuracy_starter
+  user_query: "Which parts actually fixed hot no-start single click on <MAKE> <MODEL>?"
+  intent_description: Identify most successful parts replacements for hot no-start cases.
+  expected_primary_match: RO-0003
+  acceptable_secondary_matches:
+    - RO-0001
+    - RO-0002
+  explicit_non_matches:
+    - RO-0059
+    - RO-0070
+- scenario_id: advisor_time_to_fix_hvac
+  user_query: "Typical labor time to fix blower runs but no airflow on <MAKE> <MODEL>?"
+  intent_description: Estimate labor hours from prior HVAC airflow repairs.
+  expected_primary_match: RO-0032
+  acceptable_secondary_matches:
+    - RO-0031
+    - RO-0033
+  explicit_non_matches:
+    - RO-0046
+    - RO-0088
+- scenario_id: manager_trend_brake_vibration
+  user_query: "Trend of brake vibration complaints on <MAKE> <MODEL> this quarter."
+  intent_description: Retrieve brake vibration ROs for trend analysis.
+  expected_primary_match: RO-0058
+  acceptable_secondary_matches:
+    - RO-0056
+    - RO-0057
+  explicit_non_matches:
+    - RO-0022
+    - RO-0067
+- scenario_id: manager_repeat_comebacks_electrical
+  user_query: "Show electrical comebacks tied to no-start on <MAKE> <MODEL>."
+  intent_description: Identify no-start electrical repairs marked as repeat visits.
+  expected_primary_match: RO-0064
+  acceptable_secondary_matches:
+    - RO-0062
+    - RO-0063
+  explicit_non_matches:
+    - RO-0034
+    - RO-0052
+- scenario_id: manager_parts_reuse_pattern
+  user_query: "Which part numbers keep resolving transmission shudder on <MAKE> <MODEL>?"
+  intent_description: Find repeat parts usage associated with transmission shudder fixes.
+  expected_primary_match: RO-0044
+  acceptable_secondary_matches:
+    - RO-0043
+    - RO-0045
+  explicit_non_matches:
+    - RO-0028
+    - RO-0076
+- scenario_id: manager_time_to_fix_heater_core
+  user_query: "Average labor time for heater core replacements due to coolant smell on <MAKE> <MODEL>."
+  intent_description: Estimate labor time for heater core repairs tied to cabin coolant odor.
+  expected_primary_match: RO-0039
+  acceptable_secondary_matches:
+    - RO-0038
+    - RO-0040
+  explicit_non_matches:
+    - RO-0016
+    - RO-0094
+- scenario_id: manager_phone_quote_cv_axle
+  user_query: "Need a phone quote for CV axle replacement for clicking turns on <MAKE> <MODEL>."
+  intent_description: Use historical CV axle repairs to quote labor and parts.
+  expected_primary_match: RO-0051
+  acceptable_secondary_matches:
+    - RO-0049
+    - RO-0050
+  explicit_non_matches:
+    - RO-0013
+    - RO-0068
+- scenario_id: manager_diagnostic_outcome_hesitation
+  user_query: "Prior outcome for hesitation under load on <MAKE> <MODEL>, what fixed it?"
+  intent_description: Retrieve diagnostic outcomes for hesitation/misfire under load.
+  expected_primary_match: RO-0069
+  acceptable_secondary_matches:
+    - RO-0070
+    - RO-0071
+  explicit_non_matches:
+    - RO-0026
+    - RO-0035

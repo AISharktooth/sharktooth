@@ -13,7 +13,7 @@ export const roHandler: RequestHandler = async (req, res) => {
     const error = new AppError("Missing request context", { status: 400, code: "CTX_MISSING" });
     return res.status(error.status ?? 400).json({ error: error.code, message: error.message });
   }
-  if (ctx.role !== "TECH" && ctx.role !== "ADMIN" && ctx.role !== "PII_APPROVED") {
+  if (ctx.role !== "USER" && ctx.role !== "ADMIN" && ctx.role !== "DEALERADMIN" && ctx.role !== "DEVELOPER") {
     const error = new AppError("Insufficient role", { status: 403, code: "ROLE_FORBIDDEN" });
     return res.status(error.status ?? 403).json({ error: error.code, message: error.message });
   }
