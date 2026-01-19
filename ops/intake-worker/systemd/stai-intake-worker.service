@@ -1,0 +1,28 @@
+[Unit]
+Description=STAI Intake Queue Worker
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=stai-intake
+Group=stai-intake
+WorkingDirectory=/opt/sharktoothai
+Environment=NODE_ENV=production
+EnvironmentFile=/etc/stai/intake-worker.env
+ExecStart=/usr/bin/env node /opt/sharktoothai/ops/intake-worker/queueWorker.js
+Restart=on-failure
+RestartSec=5
+StartLimitIntervalSec=60
+StartLimitBurst=5
+KillSignal=SIGINT
+TimeoutStopSec=30
+SyslogIdentifier=stai-intake-worker
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=read-only
+UMask=027
+
+[Install]
+WantedBy=multi-user.target
