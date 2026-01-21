@@ -13,6 +13,16 @@ param storageAccountName string
 @description('Optional tags to apply to resources.')
 param tags object = {}
 
+param env string
+param tenantId string
+
+var tags = {
+  'stai:env': env
+  'stai:tenantId': tenantId
+  'stai:component': 'tenant-storage'
+}
+
+
 resource stg 'Microsoft.Storage/storageAccounts@2023-01-01' = {
   name: storageAccountName
   location: location
@@ -54,6 +64,14 @@ resource roQuarantine 'Microsoft.Storage/storageAccounts/blobServices/containers
   name: '${blob.name}/ro-quarantine'
   properties: { }
 }
+
+resource stg 'Microsoft.Storage/storageAccounts@2023-01-01' = {
+  name: storageAccountName
+  location: location
+  tags: tags
+  ...
+}
+
 
 output storageAccountResourceId string = stg.id
 output storageAccountName string = stg.name
