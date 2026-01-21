@@ -50,20 +50,32 @@ if ($rgExists -ne "true") {
   Write-Host "Resource group exists: $tenantRg"
 }
 
-# Ensure UAMI
-$uami = $null
-try {
-  $uami = az identity show -g $tenantRg -n $uamiName -o json | ConvertFrom-Json
-  Write-Host "UAMI exists: $uamiName"
-} catch {
+# Ensure UAMI (robust/idempotent)
+$uamiPrincipalId = az identity show -g $tenantRg -n $uamiName --query principalId -o tsv 2>$null
+$uamiResourceId  = az identity show -g $tenantRg -n $uamiName --query id -o tsv 2>$null
+
+if ([string]::IsNullOrWhiteSpace($uamiResourceId)) {
   Write-Host "Creating UAMI: $uamiName"
-  $uami = az identity create -g $tenantRg -n $uamiName -l $Location -o json | ConvertFrom-Json
+  az identity create -g $tenantRg -n $uamiName -l $Location -o none
 }
 
-$uamiPrincipalId = $uami.principalId
-$uamiResourceId  = $uami.id
+# Re-read (and retry briefly) until principalId is present
+$maxTries = 10
+for ($i=1; $i -le $maxTries; $i++) {
+  $uamiPrincipalId = az identity show -g $tenantRg -n $uamiName --query principalId -o tsv 2>$null
+  $uamiResourceId  = az identity show -g $tenantRg -n $uamiName --query id -o tsv 2>$null
+  if (-not [string]::IsNullOrWhiteSpace($uamiPrincipalId)) { break }
+  Start-Sleep -Seconds 2
+}
 
-if ([string]::IsNullOrWhiteSpace($uamiPrincipalId)) { throw "UAMI principalId missing for $uamiName" }
+if ([string]::IsNullOrWhiteSpace($uamiPrincipalId)) {
+  throw "UAMI principalId still empty after creation: $uamiName (rg=$tenantRg)"
+}
+
+Write-Host "UAMI ready:"
+Write-Host "  id: $uamiResourceId"
+Write-Host "  principalId: $uamiPrincipalId"
+
 
 # Resolve ACR resource ID
 $acrId = az acr show -g $FoundationRg -n $AcrName --query id -o tsv
