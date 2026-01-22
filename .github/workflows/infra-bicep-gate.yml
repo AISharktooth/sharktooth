@@ -1,0 +1,24 @@
+name: infra-bicep-gate
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  bicep-compile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Azure CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y azure-cli
+
+      - name: Show Bicep version
+        run: az bicep version
+
+      - name: Compile Bicep files
+        run: find infra -name '*.bicep' -print0 | xargs -0 -n1 az bicep build --file
