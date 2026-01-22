@@ -6,11 +6,35 @@ param(
   [Parameter(Mandatory=$false)] [string] $Location = "",
 
   [Parameter(Mandatory=$false)] [string] $FoundationRg = "stai-prod-foundation",
-  [Parameter(Mandatory=$false)] [string] $AcrName = "acrstaiprod"
+  [Parameter(Mandatory=$false)] [string] $AcrName = "acrstaiprod",
+  [Parameter(Mandatory=$false)] [string] $StorageAccountName = ""
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
+
+$subscriptionId = $SubscriptionId
+$location = $Location
+$storageAccountName = ""
+
+function Get-DeterministicStorageAccountName([string] $env, [string] $tenantId) {
+  $base = ("stai" + $env + $tenantId).ToLower()
+  $sanitized = ($base -replace '[^a-z0-9]', '')
+  if ([string]::IsNullOrWhiteSpace($sanitized)) { $sanitized = "stai" }
+  if ($sanitized -notmatch '^[a-z]') { $sanitized = "s$sanitized" }
+
+  if ($sanitized.Length -gt 24) {
+    $sha256 = [System.Security.Cryptography.SHA256]::Create()
+    $hashBytes = $sha256.ComputeHash([System.Text.Encoding]::UTF8.GetBytes("$env|$tenantId"))
+    $hashHex = -join ($hashBytes | ForEach-Object { $_.ToString("x2") })
+    $suffix = $hashHex.Substring(0,6)
+    $prefixLength = 24 - $suffix.Length
+    $sanitized = $sanitized.Substring(0, $prefixLength) + $suffix
+  }
+
+  while ($sanitized.Length -lt 3) { $sanitized += "0" }
+  return $sanitized
+}
 
 function Assert-Ok([string] $msg, [int] $code) {
   if ($code -ne 0) { throw $msg }
@@ -21,31 +45,42 @@ if ($TenantId -notmatch '^t-[a-z0-9]+(-[a-z0-9]+)*$') {
   throw "Invalid TenantId '$TenantId'. Expected format like: t-aisharktooth-demo (lowercase, digits, hyphen)."
 }
 
-if ([string]::IsNullOrWhiteSpace($SubscriptionId)) {
-  $SubscriptionId = az account show --query id -o tsv
+if ([string]::IsNullOrWhiteSpace($subscriptionId)) {
+  $subscriptionId = az account show --query id -o tsv
 }
-az account set --subscription $SubscriptionId | Out-Null
+az account set --subscription $subscriptionId | Out-Null
 
 # Default location from foundation RG if not provided
-if ([string]::IsNullOrWhiteSpace($Location)) {
-  $Location = az group show -n $FoundationRg --query location -o tsv
-  if ([string]::IsNullOrWhiteSpace($Location)) { throw "Could not determine location from foundation RG '$FoundationRg'." }
+if ([string]::IsNullOrWhiteSpace($location)) {
+  $location = az group show -n $FoundationRg --query location -o tsv
+  if ([string]::IsNullOrWhiteSpace($location)) { throw "Could not determine location from foundation RG '$FoundationRg'." }
 }
 
 $tenantRg = "stai-$Env-tenant-$TenantId"
 $uamiName = "uami-stai-$Env-tenant-$TenantId-ingest"
 
+if ([string]::IsNullOrWhiteSpace($StorageAccountName)) {
+  $storageAccountName = Get-DeterministicStorageAccountName -env $Env -tenantId $TenantId
+} else {
+  $storageAccountName = $StorageAccountName.ToLower()
+}
+
+if ($storageAccountName -notmatch '^[a-z][a-z0-9]{2,23}$') {
+  throw "Invalid storage account name '$storageAccountName'. Must be 3-24 chars, lowercase letters/numbers, starting with a letter."
+}
+
 Write-Host "== Provision tenant =="
-Write-Host "  subscription: $SubscriptionId"
-Write-Host "  location:     $Location"
+Write-Host "  subscription: $subscriptionId"
+Write-Host "  location:     $location"
 Write-Host "  tenantRg:     $tenantRg"
 Write-Host "  uamiName:     $uamiName"
+Write-Host "  storageAccountName: $storageAccountName"
 
 # Ensure tenant RG
 $rgExists = az group exists -n $tenantRg
 if ($rgExists -ne "true") {
   Write-Host "Creating resource group: $tenantRg"
-  az group create -n $tenantRg -l $Location -o none
+  az group create -n $tenantRg -l $location -o none
 } else {
   Write-Host "Resource group exists: $tenantRg"
 }
@@ -56,7 +91,7 @@ $uamiResourceId  = az identity show -g $tenantRg -n $uamiName --query id -o tsv 
 
 if ([string]::IsNullOrWhiteSpace($uamiResourceId)) {
   Write-Host "Creating UAMI: $uamiName"
-  az identity create -g $tenantRg -n $uamiName -l $Location -o none
+  az identity create -g $tenantRg -n $uamiName -l $location -o none
 }
 
 $stgId = az storage account show -g $tenantRg -n $storageAccountName --query id -o tsv
@@ -112,15 +147,7 @@ if ($hasAcrPull -eq "0") {
   Write-Host "AcrPull already assigned."
 }
 
-# Deterministic storage account name (lowercase, <=24 chars)
-# stai + env initial + 16 hex from sha1(tenantId)
-$sha1 = [System.Security.Cryptography.SHA1]::Create()
-$hashBytes = $sha1.ComputeHash([System.Text.Encoding]::UTF8.GetBytes("$Env|$TenantId"))
-$hex = -join ($hashBytes | ForEach-Object { $_.ToString("x2") })
-$envInitial = $Env.Substring(0,1).ToLower()
-$storageName = ("stai" + $envInitial + $hex.Substring(0,16))  # length 4+1+16=21
-
-Write-Host "Storage account name: $storageName"
+Write-Host "Storage account name: $storageAccountName"
 
 # Deploy tenant storage + containers via Bicep (management plane)
 $tags = @{
@@ -137,12 +164,13 @@ az deployment group create `
   -n "tenant-storage" `
   --mode Incremental `
   --template-file "infra/tenant/tenant-storage.bicep" `
-  --parameters location=$Location env=$Env tenantId=$TenantId storageAccountName=$storageName tags=$tagsJson `
+  --parameters location=$location env=$Env tenantId=$TenantId storageAccountName=$storageAccountName tags=$tagsJson `
   -o none
 
 Write-Host "== Done =="
 Write-Host "Tenant RG:   $tenantRg"
 Write-Host "UAMI ID:     $uamiResourceId"
 Write-Host "UAMI OID:    $uamiPrincipalId"
-Write-Host "Storage:     $storageName"
+Write-Host "Storage:     $storageAccountName"
 Write-Host "ACR:         $AcrName"
+Write-Host "Summary: tenantRg=$tenantRg uamiName=$uamiName storageAccountName=$storageAccountName containers=ro-raw,ro-processed,ro-quarantine"
