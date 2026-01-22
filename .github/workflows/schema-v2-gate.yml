@@ -23,8 +23,23 @@ jobs:
           --health-interval=5s
           --health-timeout=5s
           --health-retries=10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=10
     env:
       DATABASE_URL: postgres://postgres:postgres@localhost:5432/stro_test
+      REDIS_URL: redis://localhost:6379/0
+      RATE_LIMIT_GROUPS_JSON: '[{"name":"default","windowSec":60,"maxRequests":100,"pathPrefixes":["/"]}]'
+      CSRF_ALLOWED_ORIGINS: https://example.invalid
+      AZURE_SUBSCRIPTION_ID: 00000000-0000-0000-0000-000000000000
+      AZURE_RESOURCE_GROUP: rg-test
+      AZURE_STORAGE_ACCOUNT_NAME: storageacct
       AZURE_OPENAI_ENDPOINT: https://example.invalid
       AZURE_OPENAI_API_KEY: test-key
       AZURE_OPENAI_EMBEDDING_DEPLOYMENT: test-embed
@@ -52,6 +67,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Tenant provision PlanOnly
+        run: pwsh -NoProfile -File ./ops/tenant/provision-tenant.ps1 -Env "prod" -TenantId "t-ci-smoke" -FoundationRg "rg-ci" -AcrName "acr-ci" -PlanOnly
+
+      - name: Verify lockfile
+        run: |
+          test -f package-lock.json
+          git diff --exit-code package-lock.json
+
       - name: Wait for Postgres
         run: |
           for i in {1..30}; do
@@ -61,6 +84,17 @@ jobs:
             sleep 1
           done
           echo "Postgres did not become ready in time"
+          exit 1
+
+      - name: Wait for Redis
+        run: |
+          for i in {1..30}; do
+            if (echo > /dev/tcp/127.0.0.1/6379) >/dev/null 2>&1; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Redis did not become ready in time"
           exit 1
 
       - name: Apply migrations
@@ -73,10 +107,10 @@ jobs:
         run: npm run test:pii-ingest-db
 
       - name: Deterministic retrieval harness
-        run: npx ts-node scripts/tests/deterministic_retrieval_tests.ts
+        run: npx tsx scripts/tests/deterministic_retrieval_tests.ts
 
       - name: Tenant RLS harness
-        run: npx ts-node scripts/tests/tenant_rls_harness.ts
+        run: npx tsx scripts/tests/tenant_rls_harness.ts
 
       - name: Schema V2 guards
         env:
